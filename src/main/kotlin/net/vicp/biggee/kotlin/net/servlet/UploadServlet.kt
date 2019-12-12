@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletResponse
 class UploadServlet : HttpServlet() {
     private val serialVersionUID = 2L
     private var isMultipart = false
-    private val maxFileSize = 1024 * 1024 * 10
-    private val maxMemSize = 100 * 1024
+    private val maxFileSize = 1_000_000_000
+    private val maxMemSize = 1_000_000_000
     private val logger = LoggerFactory.getLogger(javaClass)
 
     /**

@@ -17,12 +17,11 @@ object FileIO {
 
     fun bornFile(file: String): File {
         var result = File(file)
+        val path = result.parent
+        val origName = result.name
         var cnt = 1
         while (result.exists()) {
-            if (result.isDirectory) {
-                result = File("${cnt++}$file")
-            }
-            result.delete()
+            result = File(path, "${cnt++}$origName")
         }
         return result
     }
