@@ -15,6 +15,18 @@ object FileIO {
         return p.toMap()
     }
 
+    fun bornFile(file: String): File {
+        var result = File(file)
+        var cnt = 1
+        while (result.exists()) {
+            if (result.isDirectory) {
+                result = File("${cnt++}$file")
+            }
+            result.delete()
+        }
+        return result
+    }
+
     fun bornDir(dir: String): File {
         val file = checkDir(dir)
         var result = file
