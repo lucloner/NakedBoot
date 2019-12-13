@@ -2,27 +2,35 @@ package net.vicp.biggee.kotlin.sys.core
 
 import net.vicp.biggee.java.util.ClassUtils
 import net.vicp.biggee.kotlin.net.servlet.UploadServlet
+import net.vicp.biggee.kotlin.net.servlet.WarsServlet
 import net.vicp.biggee.kotlin.util.FileIO
 import org.apache.catalina.LifecycleState
 import org.apache.catalina.Server
 import org.apache.catalina.startup.Tomcat
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.util.*
 import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
 
 
-object BluePrint {
+object NakedBoot {
     var tomcat: Tomcat? = null
     lateinit var tomcatThread: Thread
     val globalSetting = HashMap<Any, Any>()
     val packages = HashSet<String>()
-    val settings = HashMap<String?, Map<*, *>>()
-    val logger = LoggerFactory.getLogger(javaClass)
+    val settings = HashMap<String?, Map<Any, Any>>()
+    private val logger by lazy { LoggerFactory.getLogger(javaClass) }
     private const val globalSettingFile = "global.properties"
     @JvmStatic
+    @Volatile
     var uploadDir = ""
+    @JvmStatic
+    val enabledWars = ArrayList<String>()
 
     fun start() {
         loadAllSetting()
@@ -39,22 +47,22 @@ object BluePrint {
         val tomcat = Tomcat()
         tomcat.setBaseDir(FileIO.bornDir(catBase).absolutePath) // 设置工作目录
         tomcat.setHostname(hostName) // 主机名, 将生成目录: {工作目录}/work/Tomcat/{主机名}/ROOT
-        FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}work${File.separator}Tomcat${File.separator}${hostName}${File.separator}ROOT")
+        //FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}work${File.separator}Tomcat${File.separator}${hostName}${File.separator}ROOT")
 
-        logger.error("working dir: ${tomcat.server.catalinaBase}")
-        logger.error("Hostname: $hostName")
+        logger.info("working dir: ${tomcat.server.catalinaBase}")
+        logger.info("Hostname: $hostName")
 
         tomcat.setPort(port)
         val conn = tomcat.connector // Tomcat 9.0 必须调用 Tomcat#getConnector() 方法之后才会监听端口
 
-        logger.error("connector ok: $conn")
+        logger.info("connector ok: $conn")
 
         val urlList = HashSet<String>()
 
-        FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}root")
-        tomcat.addWebapp("", "${tomcat.server.catalinaBase.absolutePath}${File.separator}root").apply {
-            urlList.add("/")
-        }
+//        FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}root")
+//        tomcat.addWebapp("", "${tomcat.server.catalinaBase.absolutePath}${File.separator}root").apply {
+//            urlList.add("/")
+//        }
 
         FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}war")
             .listFiles { _, fn -> fn.endsWith(".war") }?.iterator()?.forEach {
@@ -69,24 +77,7 @@ object BluePrint {
         // srvtest上下文的基础目录，用于静态文件。相对于服务器主目录必须存在 ({主目录}/webapps/{srvtest})
         FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}webapps${File.separator}srvtest")
         val ctx = tomcat.addContext("/globalServlet",  /*{webapps}/~*/"srvtest")
-        Tomcat.addServlet(ctx, "hello", object : HttpServlet() {
-            private val serialVersionUID = 1L
-            override fun service(request: HttpServletRequest, response: HttpServletResponse) {
-                response.characterEncoding = "UTF-8"
-                response.contentType = "text/html"
-                response.setHeader("Server", "Embedded Tomcat")
-                response.writer.use { writer ->
-                    writer.write("Hello, Embedded Tomcat!")
-                    urlList.iterator().forEach {
-                        writer.write("<BR /><a href=${it}>${it}</a><BR />")
-                    }
-                    writer.flush()
-                }
-            }
-        })
-        ctx.addServletMappingDecoded("/hello", "hello")
-        Tomcat.addServlet(ctx, "upload", UploadServlet())
-        ctx.addServletMappingDecoded("/upload", "upload")
+
         Tomcat.addServlet(ctx, "cmd", object : HttpServlet() {
             private val serialVersionUID = 3L
             override fun service(request: HttpServletRequest, response: HttpServletResponse) {
@@ -102,7 +93,7 @@ object BluePrint {
                             response.writer.println("服务器已经停止")
                             return
                         }
-                        "start" -> startTomcat()
+                        "start" -> start()
                         "restart" -> {
                             tomcatThread = Thread {
                                 restartTomcat()
@@ -152,15 +143,63 @@ object BluePrint {
         this.tomcat = tomcat
         uploadDir =
             FileIO.bornDir("${tomcat.server?.catalinaBase?.absolutePath ?: "."}${File.separator}upload").absolutePath
+        uploadDir = globalSetting["uploadDir"]?.toString() ?: uploadDir
+
+        //upload files
+        Tomcat.addServlet(ctx, "upload", UploadServlet(uploadDir))
+        ctx.addServletMappingDecoded("/upload", "upload")
+        //load uploaded wars
+        enabledWars.clear()
+        enabledWars.addAll(listOf(globalSetting["enabledWars"]?.toString() ?: "[]").filter {
+            File(uploadDir, it).exists() || File(uploadDir, "$it.war").exists()
+        })
+        FileIO.bornDir(uploadDir)
+            .listFiles { _, fn -> fn.endsWith(".war") && enabledWars.contains(fn) }?.iterator()?.forEach {
+                tomcat.addWebapp("/upload/${it.nameWithoutExtension}", it.absolutePath).apply {
+                    urlList.add(this.path)
+                }
+            }
+        //war manager
+        Tomcat.addServlet(ctx, "warManager", WarsServlet(uploadDir, enabledWars))
+        ctx.addServletMappingDecoded("/warManager", "warManager")
+        //catalogue
+        Tomcat.addServlet(ctx, "hello", object : HttpServlet() {
+            private val serialVersionUID = 1L
+            override fun service(request: HttpServletRequest, response: HttpServletResponse) {
+                response.characterEncoding = "UTF-8"
+                response.contentType = "text/html"
+                response.setHeader("Server", "Embedded Tomcat")
+                response.writer.use { writer ->
+                    writer.write("Hello, Embedded Tomcat!")
+                    urlList.iterator().forEach {
+                        writer.write("<BR /><a href=${it}>${it}</a><BR />")
+                    }
+                    writer.flush()
+                }
+            }
+        })
+        ctx.addServletMappingDecoded("/hello", "hello")
+
         tomcat.start()
-        logger.error("tomcat started")
+        logger.info("tomcat started")
         tomcatThread = Thread {
-            logger.error("awaiting for ${tomcat.server.shutdown}")
+            globalSetting["catBase"] = catBase
+            globalSetting["hostName"] = hostName
+            globalSetting["port"] = port
+            globalSetting["uploadDir"] = uploadDir
+            globalSetting["enabledWars"] = enabledWars
+            saveSetting(globalSettingFile)
+            logger.info("awaiting for ${tomcat.server.shutdown}")
             tomcat.server.await()
-            logger.error("exiting await for ${tomcat.server.shutdown}")
+            logger.info("exiting await for ${tomcat.server.shutdown}")
         }.apply {
             start()
         }
+        FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}root")
+        tomcat.addWebapp("", "${tomcat.server.catalinaBase.absolutePath}${File.separator}root").apply {
+            urlList.add("/")
+        }
+
         return tomcat.server
     }
 
@@ -184,15 +223,19 @@ object BluePrint {
         stopTomcat()
         while (server.server.state != LifecycleState.DESTROYED) {
             Thread.sleep(1000)
-            logger.error("经过:${System.currentTimeMillis() - now}")
+            logger.debug("经过:${System.currentTimeMillis() - now}")
         }
-        return startTomcat()
+        start()
+        return tomcat?.server
     }
 
     fun loadAllSetting() {
         try {
-            globalSetting.putAll(FileIO.loadProfile(globalSettingFile))
-            settings.put(null, globalSetting)
+            globalSetting.apply {
+                putAll(loadSetting(globalSettingFile))
+                put("uptime", Date())
+            }
+            settings.put(globalSettingFile, globalSetting)
         } catch (_: Exception) {
         }
 
@@ -214,14 +257,21 @@ object BluePrint {
         }
     }
 
-    fun loadSetting(fileAndPath: String) {
+    fun loadSetting(fileAndPath: String): Map<Any, Any> {
         val f = File(fileAndPath)
         if (!f.exists()) {
             logger.error("profile not found: $f")
-            return
+            return HashMap()
         }
-        settings.put(fileAndPath, FileIO.loadProfile(fileAndPath))
+        val result = FileIO.loadProfile(fileAndPath)
+        logger.info("profile($fileAndPath) loaded: $result")
+        settings.put(fileAndPath, result)
+        return result
     }
 
-
+    fun saveSetting(fileAndPath: String) = FileIO.saveProfile(
+        fileAndPath, HashMap<Any, Any>().apply {
+            putAll(settings[fileAndPath] ?: HashMap())
+            logger.info("profile($fileAndPath) stored: $this")
+        })
 }

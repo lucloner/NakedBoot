@@ -6,14 +6,23 @@ import java.nio.file.Files
 import java.util.*
 
 object FileIO {
-    fun loadProfile(fileAndPath: String): Map<Any, Any> {
-        val f = File(fileAndPath)
-        val stream = Files.newInputStream(f.toPath())
-        val p = Properties().apply {
-            load(stream)
+    fun loadProfile(fileAndPath: String): Map<Any, Any> = Properties().apply {
+        load(
+            Files.newInputStream(
+                File(fileAndPath).toPath()
+            )
+        )
+    }.toMap()
+
+    fun saveProfile(fileAndPath: String, setting: Map<Any, Any>) = Properties().apply {
+        setting.iterator().forEach {
+            put(it.key.toString(),it.value.toString())
         }
-        return p.toMap()
-    }
+    }.store(
+        Files.newOutputStream(
+            File(fileAndPath).toPath()
+        ), fileAndPath
+    )
 
     fun bornFile(file: String): File {
         var result = File(file)

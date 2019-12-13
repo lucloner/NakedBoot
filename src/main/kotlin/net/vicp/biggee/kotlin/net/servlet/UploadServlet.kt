@@ -1,6 +1,6 @@
 package net.vicp.biggee.kotlin.net.servlet
 
-import net.vicp.biggee.kotlin.sys.core.BluePrint
+import net.vicp.biggee.kotlin.sys.core.NakedBoot
 import net.vicp.biggee.kotlin.util.FileIO
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload
@@ -11,12 +11,12 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 
-class UploadServlet : HttpServlet() {
+class UploadServlet(private val uploadDir:String) : HttpServlet() {
     private val serialVersionUID = 2L
     private var isMultipart = false
     private val maxFileSize = 1_000_000_000
     private val maxMemSize = 1_000_000_000
-    private val logger = LoggerFactory.getLogger(javaClass)
+    private val logger by lazy { LoggerFactory.getLogger(javaClass) }
 
     /**
      * Called by the server (via the `service` method)
@@ -85,7 +85,7 @@ class UploadServlet : HttpServlet() {
     override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
         // 检查是否有一个文件上传请求
         isMultipart = ServletFileUpload.isMultipartContent(req)
-        logger.error("上传开始")
+        logger.debug("上传开始")
         resp.contentType = "text/html;charset=utf-8"
         if (!isMultipart) {
             resp.writer.println("未获取到文件")
@@ -97,9 +97,7 @@ class UploadServlet : HttpServlet() {
         factory.sizeThreshold = maxMemSize
         // Location to save data that is larger than maxMemSize.
         // Location to save data that is larger than maxMemSize.
-        BluePrint.uploadDir =
-            FileIO.bornDir("${BluePrint.tomcat?.server?.catalinaBase?.absolutePath ?: "."}${File.separator}upload")
-                .absolutePath
+
         //factory.repository=uploadDir
         // 创建一个新的文件上传处理程序
         // System.out.println(path);
@@ -110,16 +108,16 @@ class UploadServlet : HttpServlet() {
         upload.sizeMax = maxFileSize.toLong()
         val stringBuilder = StringBuilder()
         upload.parseParameterMap(req).values.iterator().forEach { list ->
-            logger.error("获取到上传列表:$list")
+            logger.trace("获取到上传列表:$list")
             list.iterator().forEach { fItem ->
-                logger.error("获取到上传元素:$fItem")
+                logger.trace("获取到上传元素:$fItem")
                 if (fItem.fieldName.contains("upload")) {
                     val name = fItem.name
                     try {
-                        val f = FileIO.bornFile("${BluePrint.uploadDir}${File.separator}$name")
-                        logger.error("写入文件:$f")
+                        val f = FileIO.bornFile("${uploadDir}${File.separator}$name")
+                        logger.trace("写入文件:$f")
                         fItem.write(f)
-                        logger.error("完成写入文件:${f.absolutePath}")
+                        logger.trace("完成写入文件:${f.absolutePath}")
                         stringBuilder.append("上传成功${f.absolutePath}\n")
                     } catch (e: Exception) {
                         stringBuilder.append("上传失败$name\n")
@@ -128,6 +126,6 @@ class UploadServlet : HttpServlet() {
             }
         }
         resp.writer.println(stringBuilder.append("完成").toString())
-        logger.error("上传结束")
+        logger.debug("上传结束")
     }
 }

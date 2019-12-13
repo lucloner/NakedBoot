@@ -141,13 +141,17 @@ public class ClassUtils {
             String classPath = urls[i].getPath();
 
             //不必搜索classes文件夹
-            if (classPath.endsWith("classes/")) {
+            if (classPath.endsWith("classes"+File.separator)) {
                 continue;
             }
 
             JarFile jarFile = null;
             try {
-                jarFile = new JarFile(classPath.substring(classPath.indexOf("/")));
+                String jarPath=classPath.substring(classPath.indexOf(File.separator));
+                if(!new File(jarPath).isFile()){
+                    continue;
+                }
+                jarFile = new JarFile(jarPath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
