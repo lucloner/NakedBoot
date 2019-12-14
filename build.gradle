@@ -67,10 +67,10 @@ tasks.withType(JavaCompile) {
 
 war {
     from 'tomcat/root' // adds a file-set to the root of the archive
-    webInf { from 'tomcat/additionalWebInf' } // adds a file-set to the WEB-INF dir.
-    classpath fileTree('additionalLibs') // adds a file-set to the WEB-INF/lib dir.
+    webInf { from 'tomcat/WEB-INF' } // adds a file-set to the WEB-INF dir.
+    classpath fileTree('warlib') // adds a file-set to the WEB-INF/lib dir.
     //classpath configurations.moreLibs // adds a configuration to the WEB-INF/lib dir.
-    //webXml = file('src/someWeb.xml') // copies a file to WEB-INF/web.xml
+    webXml = file('tomcat/web.xml') // copies a file to WEB-INF/web.xml
 }
 
 task clearBluePrint(type:Delete){

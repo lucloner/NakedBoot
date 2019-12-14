@@ -1,5 +1,6 @@
 package net.vicp.biggee.kotlin.net.servlet
 
+import net.vicp.biggee.kotlin.sys.core.NakedBoot
 import org.slf4j.LoggerFactory
 import java.io.File
 import javax.servlet.http.HttpServlet
@@ -9,6 +10,11 @@ import javax.servlet.http.HttpServletResponse
 class WarsServlet(private val warDir: String, private val enabledList: MutableSet<String>) : HttpServlet() {
     private val serialVersionUID = 4L
     private val logger by lazy { LoggerFactory.getLogger(javaClass) }
+
+    constructor() : this(
+        NakedBoot.loadAllSetting()[NakedBoot.globalSettingFile]?.get("uploadDir").toString(),
+        NakedBoot.enabledWars
+    )
 
     override fun service(req: HttpServletRequest, resp: HttpServletResponse) {
         req.characterEncoding = "UTF-8"

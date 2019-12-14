@@ -10,6 +10,7 @@ import org.apache.catalina.startup.Tomcat
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -21,11 +22,11 @@ object NakedBoot {
     var tomcat: Tomcat? = null
     lateinit var tomcatThread: Thread
     @JvmStatic
-    val globalSetting = HashMap<Any, Any>()
+    val globalSetting = ConcurrentHashMap<Any, Any>()
     @JvmStatic
     val packages = HashSet<String>()
     @JvmStatic
-    val settings = HashMap<String?, Map<Any, Any>>()
+    val settings = ConcurrentHashMap<String?, Map<Any, Any>>()
     private val logger by lazy { LoggerFactory.getLogger(javaClass) }
     const val globalSettingFile = "global.properties"
     @JvmStatic
@@ -37,6 +38,13 @@ object NakedBoot {
     fun start() {
         loadAllSetting()
         startTomcat()
+    }
+
+    private fun globalDefault() = globalSetting.apply {
+        if (!containsKey("catBase")) put("catBase", "tomcat")
+        if (!containsKey("hostName")) put("hostName", "host-${this.javaClass.simpleName}")
+        if (!containsKey("port")) put("port", 7573)
+        if (!containsKey("uploadDir")) put("uploadDir", "${get("catBase")}${File.separator}upload")
     }
 
     private fun startTomcat(): Server? {
@@ -60,11 +68,6 @@ object NakedBoot {
         logger.info("connector ok: $conn")
 
         val urlList = HashSet<String>()
-
-//        FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}root")
-//        tomcat.addWebapp("", "${tomcat.server.catalinaBase.absolutePath}${File.separator}root").apply {
-//            urlList.add("/")
-//        }
 
         FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}war")
             .listFiles { _, fn -> fn.endsWith(".war") }?.iterator()?.forEach {
@@ -145,7 +148,8 @@ object NakedBoot {
         this.tomcat = tomcat
         uploadDir =
             FileIO.bornDir("${tomcat.server?.catalinaBase?.absolutePath ?: "."}${File.separator}upload").absolutePath
-        uploadDir = globalSetting["uploadDir"]?.toString() ?: uploadDir
+        uploadDir = FileIO.bornDir(globalSetting["uploadDir"]?.toString() ?: uploadDir).absolutePath
+
 
         //upload files
         Tomcat.addServlet(ctx, "upload", UploadServlet(uploadDir))
@@ -160,7 +164,7 @@ object NakedBoot {
                 while (warFile.endsWith("]")) {
                     warFile = warFile.removeRange(warFile.length - 1, warFile.length)
                 }
-                add(warFile)
+                add(warFile.trim())
             }
         }.filter {
             val f = File(uploadDir, it)
@@ -245,7 +249,7 @@ object NakedBoot {
         return tomcat?.server
     }
 
-    fun loadAllSetting() {
+    fun loadAllSetting(): MutableMap<String?, Map<Any, Any>> {
         try {
             globalSetting.apply {
                 putAll(loadSetting(globalSettingFile))
@@ -271,6 +275,9 @@ object NakedBoot {
             } catch (_: Exception) {
             }
         }
+
+        logger.info("载入配置:${globalDefault()}")
+        return settings
     }
 
     fun loadSetting(fileAndPath: String): Map<Any, Any> {

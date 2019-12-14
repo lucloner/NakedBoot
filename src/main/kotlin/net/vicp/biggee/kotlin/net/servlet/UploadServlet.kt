@@ -18,6 +18,8 @@ class UploadServlet(private val uploadDir:String) : HttpServlet() {
     private val maxMemSize = 1_000_000_000
     private val logger by lazy { LoggerFactory.getLogger(javaClass) }
 
+    constructor() : this(NakedBoot.loadAllSetting()[NakedBoot.globalSettingFile]?.get("uploadDir").toString())
+
     /**
      * Called by the server (via the `service` method)
      * to allow a servlet to handle a POST request.
@@ -115,9 +117,9 @@ class UploadServlet(private val uploadDir:String) : HttpServlet() {
                     val name = fItem.name
                     try {
                         val f = FileIO.bornFile("${uploadDir}${File.separator}$name")
-                        logger.trace("写入文件:$f")
+                        logger.trace("写入文件:${f.absolutePath}")
                         fItem.write(f)
-                        logger.trace("完成写入文件:${f.absolutePath}")
+                        logger.trace("完成写入文件:${f.exists()}")
                         stringBuilder.append("上传成功${f.absolutePath}\n")
                     } catch (e: Exception) {
                         stringBuilder.append("上传失败$name\n")

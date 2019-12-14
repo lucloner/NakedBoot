@@ -1,0 +1,23 @@
+<web-app>
+
+    <servlet>
+        <servlet-name>NakedBoot_Upload</servlet-name>
+        <servlet-class>net.vicp.biggee.kotlin.net.servlet.UploadServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>NakedBoot_Upload</servlet-name>
+        <url-pattern>/globalServlet/upload</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>NakedBoot_WarsMan</servlet-name>
+        <servlet-class>net.vicp.biggee.kotlin.net.servlet.WarsServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>NakedBoot_WarsMan</servlet-name>
+        <url-pattern>/globalServlet/warManager</url-pattern>
+    </servlet-mapping>
+
+</web-app>

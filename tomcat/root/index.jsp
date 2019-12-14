@@ -13,16 +13,16 @@
 <body>
 <%=getClass()%>
 $END$
-<form action="/globalServlet/upload" method="post" enctype="multipart/form-data">
+<form action="globalServlet/upload" method="post" enctype="multipart/form-data">
   　　　<input type="file" id="upload" name="upload"/>
   　　　<input type="submit" value="Upload"/>
 </form>
 <br/>
-<a href="/globalServlet/?cmd=commitUpload">应用上传</a><br/>
-<a href="/globalServlet/?cmd=flush">清空上传</a><br/>
-<a href="/globalServlet/?cmd=stop">停止服务器</a><br/>
-<a href="/globalServlet/?cmd=start">开始服务器</a><br/>
-<a href="/globalServlet/?cmd=restart">重启服务器</a><br/>
+<a href="globalServlet/?cmd=commitUpload">应用上传</a><br/>
+<a href="globalServlet/?cmd=flush">清空上传</a><br/>
+<a href="globalServlet/?cmd=stop">停止服务器</a><br/>
+<a href="globalServlet/?cmd=start">开始服务器</a><br/>
+<a href="globalServlet/?cmd=restart">重启服务器</a><br/>
 </body>
 
 </html>
