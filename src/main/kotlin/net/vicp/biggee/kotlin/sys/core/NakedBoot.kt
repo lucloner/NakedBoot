@@ -13,7 +13,6 @@ import java.util.*
 import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
@@ -21,16 +20,19 @@ import kotlin.collections.HashSet
 object NakedBoot {
     var tomcat: Tomcat? = null
     lateinit var tomcatThread: Thread
+    @JvmStatic
     val globalSetting = HashMap<Any, Any>()
+    @JvmStatic
     val packages = HashSet<String>()
+    @JvmStatic
     val settings = HashMap<String?, Map<Any, Any>>()
     private val logger by lazy { LoggerFactory.getLogger(javaClass) }
-    private const val globalSettingFile = "global.properties"
+    const val globalSettingFile = "global.properties"
     @JvmStatic
     @Volatile
     var uploadDir = ""
     @JvmStatic
-    val enabledWars = ArrayList<String>()
+    val enabledWars = HashSet<String>()
 
     fun start() {
         loadAllSetting()
@@ -149,10 +151,24 @@ object NakedBoot {
         Tomcat.addServlet(ctx, "upload", UploadServlet(uploadDir))
         ctx.addServletMappingDecoded("/upload", "upload")
         //load uploaded wars
-        enabledWars.clear()
-        enabledWars.addAll(listOf(globalSetting["enabledWars"]?.toString() ?: "[]").filter {
-            File(uploadDir, it).exists() || File(uploadDir, "$it.war").exists()
-        })
+        enabledWars.apply {
+            (globalSetting["enabledWars"]?.toString() ?: "[]").split(",").iterator().forEach {
+                var warFile = it
+                while (warFile.startsWith("[")) {
+                    warFile = warFile.removeRange(0, 1)
+                }
+                while (warFile.endsWith("]")) {
+                    warFile = warFile.removeRange(warFile.length - 1, warFile.length)
+                }
+                add(warFile)
+            }
+        }.filter {
+            val f = File(uploadDir, it)
+            logger.debug("filter: $f")
+            return@filter f.isFile && f.exists()
+        }
+
+        logger.debug("enabledWars: $enabledWars")
         FileIO.bornDir(uploadDir)
             .listFiles { _, fn -> fn.endsWith(".war") && enabledWars.contains(fn) }?.iterator()?.forEach {
                 tomcat.addWebapp("/upload/${it.nameWithoutExtension}", it.absolutePath).apply {
@@ -172,7 +188,7 @@ object NakedBoot {
                 response.writer.use { writer ->
                     writer.write("Hello, Embedded Tomcat!")
                     urlList.iterator().forEach {
-                        writer.write("<BR /><a href=${it}>${it}</a><BR />")
+                        writer.write("<BR /><a href=${it}>Context: [${it}]</a><BR />")
                     }
                     writer.flush()
                 }
