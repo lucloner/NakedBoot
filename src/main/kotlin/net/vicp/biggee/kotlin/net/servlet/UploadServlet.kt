@@ -11,14 +11,31 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 
-class UploadServlet(private val uploadDir:String) : HttpServlet() {
+class UploadServlet(upload: String) : HttpServlet() {
     private val serialVersionUID = 2L
     private var isMultipart = false
     private val maxFileSize = 1_000_000_000
     private val maxMemSize = 1_000_000_000
     private val logger by lazy { LoggerFactory.getLogger(javaClass) }
+    private val uploadDir: String
 
-    constructor() : this(NakedBoot.loadAllSetting()[NakedBoot.globalSettingFile]?.get("uploadDir").toString())
+    constructor() : this(
+        NakedBoot.globalSetting["uploadDir"]?.toString()
+            ?: NakedBoot.loadAllSetting()[NakedBoot.globalSettingFile]?.get("uploadDir").toString()
+    )
+
+
+    init {
+        var dir = upload
+        try {
+            FileIO.bornDir(upload)
+        } catch (_: Exception) {
+            dir = createTempDir().absolutePath
+        }
+        logger.info("=============upload path:$dir")
+        uploadDir = dir
+        NakedBoot.globalSetting["uploadDir"] = uploadDir
+    }
 
     /**
      * Called by the server (via the `service` method)

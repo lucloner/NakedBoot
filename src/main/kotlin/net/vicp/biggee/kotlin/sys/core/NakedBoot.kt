@@ -44,7 +44,9 @@ object NakedBoot {
         if (!containsKey("catBase")) put("catBase", "tomcat")
         if (!containsKey("hostName")) put("hostName", "host-${this.javaClass.simpleName}")
         if (!containsKey("port")) put("port", 7573)
-        if (!containsKey("uploadDir")) put("uploadDir", "${get("catBase")}${File.separator}upload")
+        if (!containsKey("uploadDir")) {
+            put("uploadDir", "${get("catBase")}${File.separator}upload")
+        }
     }
 
     private fun startTomcat(): Server? {
