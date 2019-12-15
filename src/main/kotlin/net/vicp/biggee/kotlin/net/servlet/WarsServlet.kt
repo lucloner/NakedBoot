@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse
 
 class WarsServlet(upload: String, private val enabledList: MutableSet<String>) : HttpServlet() {
     private val serialVersionUID = 4L
-    private val logger by lazy { LoggerFactory.getLogger(javaClass) }
+    private val logger by lazy { LoggerFactory.getLogger(this::class.java) }
     private val warDir: String
 
     constructor() : this(

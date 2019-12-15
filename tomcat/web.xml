@@ -1,5 +1,9 @@
 <web-app>
 
+    <listener>
+        <listener-class>net.vicp.biggee.java.sys.BluePrint</listener-class>
+    </listener>
+
     <servlet>
         <servlet-name>NakedBoot_Upload</servlet-name>
         <servlet-class>net.vicp.biggee.kotlin.net.servlet.UploadServlet</servlet-class>

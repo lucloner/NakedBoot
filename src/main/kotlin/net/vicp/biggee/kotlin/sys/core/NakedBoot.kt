@@ -27,7 +27,7 @@ object NakedBoot {
     val packages = HashSet<String>()
     @JvmStatic
     val settings = ConcurrentHashMap<String?, Map<Any, Any>>()
-    private val logger by lazy { LoggerFactory.getLogger(javaClass) }
+    private val logger by lazy { LoggerFactory.getLogger(this::class.java) }
     const val globalSettingFile = "global.properties"
     @JvmStatic
     @Volatile
