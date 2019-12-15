@@ -1,6 +1,7 @@
 package net.vicp.biggee.java.sys;
 
 
+import net.vicp.biggee.java.util.ClassUtils;
 import net.vicp.biggee.kotlin.sys.core.NakedBoot;
 import net.vicp.biggee.kotlin.util.FileIO;
 import org.apache.log4j.FileAppender;
@@ -16,7 +17,9 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.TreeMap;
+import java.util.zip.ZipFile;
 
 /**
  * @program: BluePrint
@@ -123,6 +126,17 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
         logger = log;
         logger.info("++++++++++++++++Server Init+++++++++++++++++++");
         logger.info("path:" + path);
+
+        try {
+            final HashSet<ZipFile> fs = new HashSet<>();
+            logger.debug(getClass().getPackage().getName());
+            ClassUtils.getClassName(getClass().getPackage().getName(), true, fs);
+            for (ZipFile f : fs) {
+                FileIO.INSTANCE.decompress(f.getName(), FileIO.INSTANCE.bornDir(path.toPath() + File.separator + "clz").getAbsolutePath());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**

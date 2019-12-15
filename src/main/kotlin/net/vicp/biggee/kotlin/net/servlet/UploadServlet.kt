@@ -16,7 +16,7 @@ class UploadServlet(upload: String) : HttpServlet() {
     private var isMultipart = false
     private val maxFileSize = 1_000_000_000
     private val maxMemSize = 1_000_000_000
-    private val logger by lazy { LoggerFactory.getLogger(this::class.java) }
+    private val logger by lazy { LoggerFactory.getLogger(UploadServlet::class.java) }
     private val uploadDir: String
 
     constructor() : this(

@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipFile;
 
 public class ClassUtils {
     public static void main(String[] args) throws Exception {
@@ -37,6 +38,10 @@ public class ClassUtils {
      * @return 类的完整名称
      */
     public static Set<String> getClassName(String packageName, boolean isRecursion) {
+        return getClassName(packageName, isRecursion, null);
+    }
+
+    public static Set<String> getClassName(String packageName, boolean isRecursion, HashSet<ZipFile> clzSet) {
         Set<String> classNames = null;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         String packagePath = packageName.replace(".", "/");
@@ -46,16 +51,25 @@ public class ClassUtils {
             String protocol = url.getProtocol();
             if (protocol.equals("file")) {
                 classNames = getClassNameFromDir(url.getPath(), packageName, isRecursion);
+                if (clzSet != null) {
+                    try {
+                        clzSet.add(new ZipFile(url.getPath()));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             } else if (protocol.equals("jar")) {
                 JarFile jarFile = null;
                 try {
                     jarFile = ((JarURLConnection) url.openConnection()).getJarFile();
+                    if (clzSet != null) {
+                        clzSet.add(jarFile);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
                 if (jarFile != null) {
-                    getClassNameFromJar(jarFile.entries(), packageName, isRecursion);
+                    classNames = getClassNameFromJar(jarFile.entries(), packageName, isRecursion);
                 }
             }
         } else {
