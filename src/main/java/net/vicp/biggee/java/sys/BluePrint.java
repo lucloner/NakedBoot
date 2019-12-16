@@ -1,7 +1,5 @@
 package net.vicp.biggee.java.sys;
 
-
-import net.vicp.biggee.java.util.ClassUtils;
 import net.vicp.biggee.kotlin.sys.core.NakedBoot;
 import net.vicp.biggee.kotlin.util.FileIO;
 import org.apache.log4j.FileAppender;
@@ -17,9 +15,7 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.TreeMap;
-import java.util.zip.ZipFile;
 
 /**
  * @program: BluePrint
@@ -90,7 +86,6 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
         frame.setVisible(true);
     }
 
-
     /**
      * 统一设置字体，父界面设置之后，所有由父界面进入的子界面都不需要再次设置字体
      */
@@ -117,26 +112,16 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
     public void contextInitialized(ServletContextEvent sce) {
         put(sce.getClass().getName(), sce);
         final File path = FileIO.INSTANCE.bornDir(System.getProperty("catalina.base") + File.separator + "upload");
-        NakedBoot.getGlobalSetting().put("uploadDir", path.toPath());
+        NakedBoot.setUploadDir(path.getAbsolutePath());
+        NakedBoot.getGlobalSetting().put("uploadDir", NakedBoot.getUploadDir());
 
         Logger log = Logger.getLogger(BluePrint.class);//获取log对象
         FileAppender fileAppender = (FileAppender) Logger.getRootLogger().getAppender("File");//获取FileAppender对象
-        fileAppender.setFile(path.toPath() + File.separator + "ssm.log");//重新设置输出日志的路径和文件名
+        fileAppender.setFile(NakedBoot.getUploadDir() + File.separator + "ssm.log");//重新设置输出日志的路径和文件名
         fileAppender.activateOptions();//使设置的FileAppender起作用
         logger = log;
         logger.info("++++++++++++++++Server Init+++++++++++++++++++");
-        logger.info("path:" + path);
-
-        try {
-            final HashSet<ZipFile> fs = new HashSet<>();
-            logger.debug(getClass().getPackage().getName());
-            ClassUtils.getClassName(getClass().getPackage().getName(), true, fs);
-            for (ZipFile f : fs) {
-                FileIO.INSTANCE.decompress(f.getName(), FileIO.INSTANCE.bornDir(path.toPath() + File.separator + "clz").getAbsolutePath());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        logger.info("path:" + NakedBoot.getUploadDir());
     }
 
     /**

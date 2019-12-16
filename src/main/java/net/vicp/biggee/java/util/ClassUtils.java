@@ -7,6 +7,8 @@ package net.vicp.biggee.java.util;
  * @create: 2019-12-03 16:34
  **/
 
+import net.vicp.biggee.kotlin.util.FileIO;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -53,8 +55,8 @@ public class ClassUtils {
                 classNames = getClassNameFromDir(url.getPath(), packageName, isRecursion);
                 if (clzSet != null) {
                     try {
-                        clzSet.add(new ZipFile(url.getPath()));
-                    } catch (IOException e) {
+                        clzSet.add(FileIO.INSTANCE.tmpZip(url.getPath()));
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -92,6 +94,9 @@ public class ClassUtils {
         Set<String> className = new HashSet<String>();
         File file = new File(filePath);
         File[] files = file.listFiles();
+        if (files == null) {
+            return className;
+        }
         for (File childFile : files) {
             if (childFile.isDirectory()) {
                 if (isRecursion) {
@@ -107,7 +112,6 @@ public class ClassUtils {
 
         return className;
     }
-
 
     /**
      * @param jarEntries

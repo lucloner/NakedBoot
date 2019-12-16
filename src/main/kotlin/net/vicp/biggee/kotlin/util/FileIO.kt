@@ -1,5 +1,7 @@
 package net.vicp.biggee.kotlin.util
 
+import net.vicp.biggee.java.util.ClassUtils
+import net.vicp.biggee.kotlin.sys.core.NakedBoot
 import java.io.*
 import java.nio.file.Files
 import java.util.*
@@ -7,6 +9,15 @@ import java.util.zip.*
 
 
 object FileIO {
+    /** 缓冲器大小  */
+    private const val BUFFER = 512
+    //创建临时目录
+    private val tmpDir by lazy {
+        val f = createTempDir()
+        println("tmpDir:${f.absolutePath}")
+        return@lazy f
+    }
+
     fun loadProfile(fileAndPath: String): Map<Any, Any> = Properties().apply {
         load(
             Files.newInputStream(
@@ -55,8 +66,6 @@ object FileIO {
         }
     }
 
-    /** 缓冲器大小  */
-    private const val BUFFER = 512
 
     /**压缩得到的文件的后缀名 */
     //private const val SUFFIX = ".zip"
@@ -67,6 +76,9 @@ object FileIO {
      */
     fun getAllFile(dirFile: File): List<File> {
         val fileList = ArrayList<File>()
+        if (dirFile.isFile) {
+            return listOf(dirFile)
+        }
         val files = dirFile.listFiles() ?: return fileList
         for (file in files) { //文件
             if (file.isFile) {
@@ -208,7 +220,9 @@ object FileIO {
             var zipEntry: ZipEntry
             val buffer = ByteArray(BUFFER) //缓冲器
             var readLength: Int //每次读出来的长度
-            while (zis.nextEntry.also { zipEntry = it } != null) {
+            while (zis.available() > 0) {
+                zipEntry = zis.nextEntry ?: break
+                //zis.nextEntry.also { zipEntry = it } != null
                 if (zipEntry.isDirectory) { //若是目录
                     val file = File(destPath + "/" + zipEntry.name)
                     if (!file.exists()) {
@@ -233,4 +247,29 @@ object FileIO {
         }
     }
 
+    fun tmpZip(file: String): ZipFile? {
+        val origFile = File(file)
+        val destFile: File = bornFile(File(tmpDir, "${origFile.name}.zip").absolutePath)
+        compress(origFile.absolutePath, destFile.absolutePath)
+        if (destFile.exists()) {
+            return ZipFile(destFile)
+        }
+        return null
+    }
+
+    fun collectClz() {
+        try {
+            val fs = HashSet<ZipFile>()
+            println(javaClass.getPackage().name)
+            ClassUtils.getClassName(javaClass.getPackage().name, true, fs)
+            for (f in fs) {
+                decompress(
+                    f.name,
+                    bornDir(NakedBoot.uploadDir + File.separator + "clz").absolutePath
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }
