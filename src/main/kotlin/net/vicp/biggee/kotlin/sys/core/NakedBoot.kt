@@ -17,7 +17,6 @@ import javax.servlet.http.HttpServletResponse
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
-
 object NakedBoot {
     var tomcat: Tomcat? = null
     lateinit var tomcatThread: Thread

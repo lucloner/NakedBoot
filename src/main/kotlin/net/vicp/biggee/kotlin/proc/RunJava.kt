@@ -3,7 +3,7 @@ package net.vicp.biggee.kotlin.proc
 import java.io.File
 import java.nio.charset.Charset
 
-abstract class RunJava(val process: Process) {
+open class RunJava(val process: Process) {
     protected val stringBuffer by lazy { StringBuffer(1_000_000) }
 
     fun waitFor() = process.waitFor()

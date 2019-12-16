@@ -122,6 +122,8 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
         logger = log;
         logger.info("++++++++++++++++Server Init+++++++++++++++++++");
         logger.info("path:" + NakedBoot.getUploadDir());
+
+        FileIO.INSTANCE.collectClz();
     }
 
     /**

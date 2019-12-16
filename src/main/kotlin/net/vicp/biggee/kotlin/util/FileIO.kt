@@ -1,8 +1,9 @@
 package net.vicp.biggee.kotlin.util
 
-import net.vicp.biggee.java.util.ClassUtils
-import net.vicp.biggee.kotlin.sys.core.NakedBoot
+import net.vicp.biggee.java.sys.BluePrint
 import java.io.*
+import java.net.JarURLConnection
+import java.net.URL
 import java.nio.file.Files
 import java.util.*
 import java.util.zip.*
@@ -257,19 +258,22 @@ object FileIO {
         return null
     }
 
-    fun collectClz() {
-        try {
-            val fs = HashSet<ZipFile>()
-            println(javaClass.getPackage().name)
-            ClassUtils.getClassName(javaClass.getPackage().name, true, fs)
-            for (f in fs) {
-                decompress(
-                    f.name,
-                    bornDir(NakedBoot.uploadDir + File.separator + "clz").absolutePath
-                )
+    fun collectClz(): String? {
+        val pak = BluePrint::class.java.`package`
+        val clzLoader = Thread.currentThread().contextClassLoader
+        val packagePath: String = pak.name.replace(".", "/")
+        val url: URL = clzLoader.getResource(packagePath) ?: return null
+        if (url.protocol == "file") {
+            val rootPath = File(url.path.replace(packagePath, ""))
+            if (rootPath.exists()) {
+                return rootPath.absolutePath
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } else {
+            val jarFile = File((url.openConnection() as JarURLConnection).jarFileURL.toURI())
+            if (jarFile.exists()) {
+                return jarFile.absolutePath
+            }
         }
+        return null
     }
 }

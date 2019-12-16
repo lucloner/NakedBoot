@@ -7,8 +7,6 @@ package net.vicp.biggee.java.util;
  * @create: 2019-12-03 16:34
  **/
 
-import net.vicp.biggee.kotlin.util.FileIO;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -23,8 +21,8 @@ import java.util.zip.ZipFile;
 
 public class ClassUtils {
     public static void main(String[] args) throws Exception {
-        String packageName = "net.vicp.biggee.kotlin.sys.core";
-        Set<String> classNames = getClassName(packageName, false);
+        String packageName = "net";
+        Set<String> classNames = getClassName(packageName, true);
         if (classNames != null) {
             for (String className : classNames) {
                 System.out.println(className);
@@ -53,20 +51,10 @@ public class ClassUtils {
             String protocol = url.getProtocol();
             if (protocol.equals("file")) {
                 classNames = getClassNameFromDir(url.getPath(), packageName, isRecursion);
-                if (clzSet != null) {
-                    try {
-                        clzSet.add(FileIO.INSTANCE.tmpZip(url.getPath()));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
             } else if (protocol.equals("jar")) {
                 JarFile jarFile = null;
                 try {
                     jarFile = ((JarURLConnection) url.openConnection()).getJarFile();
-                    if (clzSet != null) {
-                        clzSet.add(jarFile);
-                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -159,13 +147,13 @@ public class ClassUtils {
             String classPath = urls[i].getPath();
 
             //不必搜索classes文件夹
-            if (classPath.endsWith("classes"+File.separator)) {
+            if (classPath.endsWith("classes/")) {
                 continue;
             }
 
             JarFile jarFile = null;
             try {
-                String jarPath=classPath.substring(classPath.indexOf(File.separator));
+                String jarPath = classPath.substring(classPath.indexOf("/"));
                 if(!new File(jarPath).isFile()){
                     continue;
                 }
