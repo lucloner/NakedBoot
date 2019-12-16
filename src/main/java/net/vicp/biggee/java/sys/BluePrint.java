@@ -25,7 +25,7 @@ import java.util.TreeMap;
  **/
 public class BluePrint extends TreeMap<String, Object> implements ServletContextListener {
     public static BluePrint INSTANCE = null;
-    private static Logger logger = null;
+    public static Logger logger = null;
 
     public BluePrint() {
         INSTANCE = this;
@@ -123,7 +123,9 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
         logger.info("++++++++++++++++Server Init+++++++++++++++++++");
         logger.info("path:" + NakedBoot.getUploadDir());
 
-        FileIO.INSTANCE.collectClz();
+        FileIO.setLogger(logger);
+
+        FileIO.INSTANCE.collectClz(getClass().getPackage());
     }
 
     /**

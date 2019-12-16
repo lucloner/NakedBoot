@@ -60,7 +60,7 @@ object NakedBoot {
         tomcat.setHostname(hostName) // 主机名, 将生成目录: {工作目录}/work/Tomcat/{主机名}/ROOT
         //FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}work${File.separator}Tomcat${File.separator}${hostName}${File.separator}ROOT")
 
-        logger.info("working dir: ${tomcat.server.catalinaBase}")
+        logger.info("working dir: ${catBase}")
         logger.info("Hostname: $hostName")
 
         tomcat.setPort(port)
