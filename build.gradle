@@ -82,5 +82,11 @@ tasks.clean.dependsOn 'clearBluePrint'
 
 startScripts.enabled = false
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'net.vicp.biggee.java.sys.BluePrint'
+    }
+}
+
 
 
