@@ -1,9 +1,11 @@
 package net.vicp.biggee.kotlin.proc
 
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.charset.Charset
 
 open class RunJava(val process: Process) {
+    private val serialVersionUID = 5L
     protected val stringBuffer by lazy { StringBuffer(1_000_000) }
 
     fun waitFor() = process.waitFor()
@@ -15,6 +17,9 @@ open class RunJava(val process: Process) {
     fun writeString(input: String) = process.outputStream.write(input.toByteArray(Charset.defaultCharset()))
 
     companion object {
+        @JvmStatic
+        var logger = LoggerFactory.getLogger(RunJava::class.java)
+
         val javaPath by lazy {
             var java1 = System.getenv("JAVA_HOME") + File.separator + "bin" + File.separator + "java"
             var java2 = System.getenv("JDK_HOME") + File.separator + "bin" + File.separator + "java"

@@ -1,7 +1,7 @@
 package net.vicp.biggee.kotlin.util
 
 import net.vicp.biggee.java.sys.BluePrint
-import org.apache.log4j.Logger
+import org.apache.juli.logging.LogFactory
 import java.io.*
 import java.net.JarURLConnection
 import java.net.URL
@@ -13,10 +13,9 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.zip.*
 
-
 object FileIO {
     @JvmStatic
-    var logger: Logger? = null
+    var logger = LogFactory.getLog(FileIO::class.java)
     /** 缓冲器大小  */
     private const val BUFFER = 512
     //创建临时目录

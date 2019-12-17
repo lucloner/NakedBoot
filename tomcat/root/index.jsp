@@ -1,5 +1,5 @@
-<%@ page import="net.vicp.biggee.kotlin.sys.core.NakedBoot" %>
-<%@ page import="org.apache.catalina.startup.Tomcat" %><%--
+<%@ page import="net.vicp.biggee.java.sys.BluePrint" %>
+<%--
   Created by IntelliJ IDEA.
   User: Lucloner
   Date: 2019-12-03
@@ -21,15 +21,20 @@ $END$
 <br/>
 <a href="globalServlet/warManager">管理上传</a><br/>
 <%
-  final Tomcat jarNakedBoot = NakedBoot.INSTANCE.getTomcat();
-  if (jarNakedBoot == null || jarNakedBoot.getServer() == null || jarNakedBoot.getServer().getState() == null || !jarNakedBoot.getServer().getState().isAvailable()) {
-    return;
-  }
+  if (BluePrint.isWar) {
 %>
+This war in Tomcat!<br/>
+<%
+} else {
+%>
+This jar in Java!<br/>
 <a href="globalServlet/?cmd=flush">清空上传</a><br/>
 <a href="globalServlet/?cmd=stop">停止服务器</a><br/>
 <a href="globalServlet/?cmd=start">开始服务器</a><br/>
 <a href="globalServlet/?cmd=restart">重启服务器</a><br/>
+<%
+  }
+%>
 </body>
 
 </html>

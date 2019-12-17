@@ -24,4 +24,14 @@
         <url-pattern>/globalServlet/warManager</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>NakedBoot_JarExec</servlet-name>
+        <servlet-class>net.vicp.biggee.kotlin.net.servlet.JarServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>NakedBoot_JarExec</servlet-name>
+        <url-pattern>/globalServlet/JarExec</url-pattern>
+    </servlet-mapping>
+
 </web-app>

@@ -2,15 +2,12 @@ package net.vicp.biggee.kotlin.net.servlet
 
 import net.vicp.biggee.kotlin.sys.core.NakedBoot
 import net.vicp.biggee.kotlin.util.FileIO
-import org.slf4j.LoggerFactory
 import java.io.File
-import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class WarsServlet(upload: String, private val enabledList: MutableSet<String>) : HttpServlet() {
+class WarsServlet(upload: String, private val enabledList: MutableSet<String>) : NakedBootHttpServlet() {
     private val serialVersionUID = 4L
-    private val logger by lazy { LoggerFactory.getLogger(WarsServlet::class.java) }
     private val warDir: String
 
     constructor() : this(

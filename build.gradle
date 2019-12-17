@@ -1,3 +1,11 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+    }
+}
 
 plugins {
     id 'java'
@@ -7,6 +15,7 @@ plugins {
     // Generate IntelliJ IDEA's .idea & .iml project files
     id 'idea'
     id 'war'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
 group 'net.vicp.biggee.java.sys'
@@ -81,12 +90,17 @@ task clearBluePrint(type:Delete){
 tasks.clean.dependsOn 'clearBluePrint'
 
 startScripts.enabled = false
-
+mainClassName = "net.vicp.biggee.java.sys.BluePrint"
 jar {
     manifest {
-        attributes 'Main-Class': 'net.vicp.biggee.java.sys.BluePrint'
+        attributes 'Main-Class': mainClassName
     }
+    archiveFileName = "${project.name}_${project.version}.jar"
 }
 
+// Output to build/libs/shadow.jar
+shadowJar {
+
+}
 
 

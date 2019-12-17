@@ -26,7 +26,8 @@ object NakedBoot {
     val packages = HashSet<String>()
     @JvmStatic
     val settings = ConcurrentHashMap<String?, Map<Any, Any>>()
-    private val logger by lazy { LoggerFactory.getLogger(NakedBoot::class.java) }
+    @JvmStatic
+    var logger = LoggerFactory.getLogger(NakedBoot::class.java)
     const val globalSettingFile = "global.properties"
     @JvmStatic
     @Volatile
@@ -34,9 +35,9 @@ object NakedBoot {
     @JvmStatic
     val enabledWars = HashSet<String>()
 
-    fun start() {
+    fun start(port: Int? = null, war: String? = null) {
         loadAllSetting()
-        startTomcat()
+        startTomcat(port, war)
     }
 
     private fun globalDefault() = globalSetting.apply {
@@ -48,12 +49,12 @@ object NakedBoot {
         }
     }
 
-    private fun startTomcat(): Server? {
+    private fun startTomcat(tcpPort: Int? = null, war: String? = null): Server? {
         Runtime.getRuntime().addShutdownHook(Thread { stopTomcat() })
         //设定
         val catBase = globalSetting["catBase"]?.toString() ?: "tomcat"
         val hostName = globalSetting["hostName"]?.toString() ?: "host-${this.javaClass.simpleName}"
-        val port = globalSetting["port"]?.toString()?.toInt() ?: 7573
+        val port = tcpPort ?: globalSetting["port"]?.toString()?.toInt() ?: 7573
 
         val tomcat = Tomcat()
         tomcat.setBaseDir(FileIO.bornDir(catBase).absolutePath) // 设置工作目录
@@ -206,19 +207,28 @@ object NakedBoot {
         tomcatThread = Thread {
             globalSetting["catBase"] = catBase
             globalSetting["hostName"] = hostName
-            globalSetting["port"] = port
             globalSetting["uploadDir"] = uploadDir
             globalSetting["enabledWars"] = enabledWars
-            saveSetting(globalSettingFile)
+            if (war.isNullOrBlank()) {
+                globalSetting["port"] = port
+                saveSetting(globalSettingFile)
+            }
             logger.info("awaiting for ${tomcat.server.shutdown}")
             tomcat.server.await()
             logger.info("exiting await for ${tomcat.server.shutdown}")
         }.apply {
             start()
         }
-        FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}root")
-        tomcat.addWebapp("", "${tomcat.server.catalinaBase.absolutePath}${File.separator}root").apply {
-            urlList.add("/")
+
+        if (!war.isNullOrBlank() && File(war).exists() && war.endsWith(".war")) {
+            tomcat.addWebapp("", File(war).absolutePath).apply {
+                urlList.add("/")
+            }
+        } else {
+            FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}root")
+            tomcat.addWebapp("", "${tomcat.server.catalinaBase.absolutePath}${File.separator}root").apply {
+                urlList.add("/")
+            }
         }
 
         return tomcat.server
@@ -298,4 +308,7 @@ object NakedBoot {
             putAll(settings[fileAndPath] ?: HashMap())
             logger.info("profile($fileAndPath) stored: $this")
         })
+
+    fun saveSetting(any: Any) = saveSetting(any.javaClass.name)
+    fun loadSetting(any: Any) = loadSetting(any.javaClass.name)
 }

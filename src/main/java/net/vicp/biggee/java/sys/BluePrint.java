@@ -26,6 +26,7 @@ import java.util.TreeMap;
 public class BluePrint extends TreeMap<String, Object> implements ServletContextListener {
     public static BluePrint INSTANCE = null;
     public static Logger logger = null;
+    public static boolean isWar = false;
 
     public BluePrint() {
         INSTANCE = this;
@@ -36,13 +37,34 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
             InitGlobalFont(new Font("Ubuntu", Font.PLAIN, 12));  //统一设置字体
         }
 
+        Integer port = null;
+        String war = null;
+        try {
+            switch (args.length) {
+                case 2:
+                    war = args[1];
+                case 1:
+                    port = Integer.parseInt(args[0]);
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
+        logger.debug("port:" + port + "\twar:" + war);
+
+        if (port != null) {
+            NakedBoot.INSTANCE.start(port, war);
+            return;
+        }
+
         JFrame frame = new JFrame("BluePrintMain");
 
         GridLayout layout = new GridLayout();
         frame.setLayout(layout);
 
         JButton button = new JButton("Start");
-        button.addActionListener(a -> net.vicp.biggee.kotlin.sys.core.NakedBoot.INSTANCE.start());
+        button.addActionListener(a -> net.vicp.biggee.kotlin.sys.core.NakedBoot.INSTANCE.start(null, null));
         //button.setFont(Font.getFont(Font.SANS_SERIF));
         frame.add(button);
 
@@ -110,6 +132,7 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
      */
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+        isWar = true;
         put(sce.getClass().getName(), sce);
         final File path = FileIO.INSTANCE.bornDir(System.getProperty("catalina.base") + File.separator + "upload");
         NakedBoot.setUploadDir(path.getAbsolutePath());
@@ -122,10 +145,6 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
         logger = log;
         logger.info("++++++++++++++++Server Init+++++++++++++++++++");
         logger.info("path:" + NakedBoot.getUploadDir());
-
-        FileIO.setLogger(logger);
-
-        FileIO.INSTANCE.collectClz(getClass().getPackage());
     }
 
     /**

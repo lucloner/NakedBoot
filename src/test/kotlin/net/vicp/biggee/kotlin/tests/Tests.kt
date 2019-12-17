@@ -44,10 +44,7 @@ class Tests {
         println()
         val c = ProcessBuilder(RunJava.javaPath, "net.vicp.biggee.java.sys.BluePrint")
         c.directory(File(p))
-        val d = RunJava(c.start())
-        println(d.waitFor())
-        println(d.readOutPut())
-        println(d.readErrorOutPut())
+
 
     }
 

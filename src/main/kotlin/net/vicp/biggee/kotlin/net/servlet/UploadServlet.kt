@@ -4,19 +4,16 @@ import net.vicp.biggee.kotlin.sys.core.NakedBoot
 import net.vicp.biggee.kotlin.util.FileIO
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory
 import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload
-import org.slf4j.LoggerFactory
 import java.io.File
-import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 
-class UploadServlet(upload: String) : HttpServlet() {
+class UploadServlet(upload: String) : NakedBootHttpServlet() {
     private val serialVersionUID = 2L
     private var isMultipart = false
     private val maxFileSize = 1_000_000_000
     private val maxMemSize = 1_000_000_000
-    private val logger by lazy { LoggerFactory.getLogger(UploadServlet::class.java) }
     private val uploadDir: String
 
     constructor() : this(
@@ -37,70 +34,6 @@ class UploadServlet(upload: String) : HttpServlet() {
         NakedBoot.globalSetting["uploadDir"] = uploadDir
     }
 
-    /**
-     * Called by the server (via the `service` method)
-     * to allow a servlet to handle a POST request.
-     *
-     * The HTTP POST method allows the client to send
-     * data of unlimited length to the Web server a single time
-     * and is useful when posting information such as
-     * credit card numbers.
-     *
-     *
-     * When overriding this method, read the request data,
-     * write the response headers, get the response's writer or output
-     * stream object, and finally, write the response data. It's best
-     * to include content type and encoding. When using a
-     * `PrintWriter` object to return the response, set the
-     * content type before accessing the `PrintWriter` object.
-     *
-     *
-     * The servlet container must write the headers before committing the
-     * response, because in HTTP the headers must be sent before the
-     * response body.
-     *
-     *
-     * Where possible, set the Content-Length header (with the
-     * [javax.servlet.ServletResponse.setContentLength] method),
-     * to allow the servlet container to use a persistent connection
-     * to return its response to the client, improving performance.
-     * The content length is automatically set if the entire response fits
-     * inside the response buffer.
-     *
-     *
-     * When using HTTP 1.1 chunked encoding (which means that the response
-     * has a Transfer-Encoding header), do not set the Content-Length header.
-     *
-     *
-     * This method does not need to be either safe or idempotent.
-     * Operations requested through POST can have side effects for
-     * which the user can be held accountable, for example,
-     * updating stored data or buying items online.
-     *
-     *
-     * If the HTTP POST request is incorrectly formatted,
-     * `doPost` returns an HTTP "Bad Request" message.
-     *
-     *
-     * @param req   an [HttpServletRequest] object that
-     * contains the request the client has made
-     * of the servlet
-     *
-     * @param resp  an [HttpServletResponse] object that
-     * contains the response the servlet sends
-     * to the client
-     *
-     * @exception IOException   if an input or output error is
-     * detected when the servlet handles
-     * the request
-     *
-     * @exception ServletException  if the request for the POST
-     * could not be handled
-     *
-     * @see javax.servlet.ServletOutputStream
-     *
-     * @see javax.servlet.ServletResponse.setContentType
-     */
     override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
         // 检查是否有一个文件上传请求
         isMultipart = ServletFileUpload.isMultipartContent(req)
@@ -131,7 +64,7 @@ class UploadServlet(upload: String) : HttpServlet() {
             list.iterator().forEach { fItem ->
                 logger.trace("获取到上传元素:$fItem")
                 if (fItem.fieldName.contains("upload")) {
-                    val name = fItem.name
+                    val name = fItem.name.split(File.separator).last()
                     try {
                         val f = FileIO.bornFile("${uploadDir}${File.separator}$name")
                         logger.trace("写入文件:${f.absolutePath}")
