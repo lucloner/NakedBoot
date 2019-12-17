@@ -25,7 +25,7 @@ import java.util.TreeMap;
  **/
 public class BluePrint extends TreeMap<String, Object> implements ServletContextListener {
     public static BluePrint INSTANCE = null;
-    public static Logger logger = null;
+    public static Logger logger = Logger.getLogger(BluePrint.class);
     public static boolean isWar = false;
 
     public BluePrint() {
@@ -43,15 +43,17 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
             switch (args.length) {
                 case 2:
                     war = args[1];
+                    logger.debug("war:" + war);
                 case 1:
                     port = Integer.parseInt(args[0]);
+                    logger.debug("port:" + port);
                     break;
+                default:
+                    logger.debug("normal boot");
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-
-        logger.debug("port:" + port + "\twar:" + war);
 
         if (port != null) {
             NakedBoot.INSTANCE.start(port, war);
@@ -145,6 +147,8 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
         logger = log;
         logger.info("++++++++++++++++Server Init+++++++++++++++++++");
         logger.info("path:" + NakedBoot.getUploadDir());
+
+        sce.getServletContext().addServlet("cmd", NakedBoot.INSTANCE).addMapping("/globalServlet/cmd");
     }
 
     /**

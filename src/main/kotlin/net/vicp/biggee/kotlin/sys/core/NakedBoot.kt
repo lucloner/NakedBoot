@@ -1,6 +1,7 @@
 package net.vicp.biggee.kotlin.sys.core
 
 import net.vicp.biggee.java.util.ClassUtils
+import net.vicp.biggee.kotlin.net.servlet.NakedBootHttpServlet
 import net.vicp.biggee.kotlin.net.servlet.UploadServlet
 import net.vicp.biggee.kotlin.net.servlet.WarsServlet
 import net.vicp.biggee.kotlin.util.FileIO
@@ -16,8 +17,10 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
+import kotlin.system.exitProcess
 
-object NakedBoot {
+object NakedBoot : NakedBootHttpServlet() {
+    private val serialVersionUID = 3L
     var tomcat: Tomcat? = null
     lateinit var tomcatThread: Thread
     @JvmStatic
@@ -27,16 +30,25 @@ object NakedBoot {
     @JvmStatic
     val settings = ConcurrentHashMap<String?, Map<Any, Any>>()
     @JvmStatic
-    var logger = LoggerFactory.getLogger(NakedBoot::class.java)
-    const val globalSettingFile = "global.properties"
+    val globalSettingFile = "global.properties"
     @JvmStatic
     @Volatile
     var uploadDir = ""
     @JvmStatic
     val enabledWars = HashSet<String>()
 
-    fun start(port: Int? = null, war: String? = null) {
+    init {
         loadAllSetting()
+        uploadDir = globalSetting["uploadDir"]?.toString() ?: uploadDir
+        logger = LoggerFactory.getLogger(NakedBoot::class.java)
+    }
+
+    fun uploadFiles() = File(uploadDir).listFiles() ?: emptyArray<File>()
+    fun uploadFilesWar() = uploadFiles().filter { it.name.endsWith(".war") }
+    fun uploadFilesJar() = uploadFiles().filter { it.name.endsWith(".jar") }
+
+    fun start(port: Int? = null, war: String? = null) {
+        globalDefault()
         startTomcat(port, war)
     }
 
@@ -49,15 +61,62 @@ object NakedBoot {
         }
     }
 
+    override fun service(req: HttpServletRequest, resp: HttpServletResponse) {
+        //接受到表单的数据， 先使用request设置服务器应该使用的字符编码,否则字符不统一会出现乱码
+        req.characterEncoding = "UTF-8"
+        resp.characterEncoding = "UTF-8"
+        resp.contentType = "text/html"
+        resp.setHeader("Server", "Embedded Tomcat")
+        try {
+            when (req.getParameter("cmd")) {
+                "stop" -> {
+                    stopTomcat()
+                    resp.writer.println("服务器已经停止")
+                    return
+                }
+                "start" -> start()
+                "restart" -> {
+                    tomcatThread = Thread {
+                        restartTomcat()
+                    }.apply { start() }
+                    resp.writer.println("完成:$tomcatThread")
+                    return
+                }
+                "flush" -> {
+                    val f = File(uploadDir)
+                    if (uploadDir.isNullOrEmpty() || !f.exists()) {
+                        resp.writer.println("没有上传文件")
+                        return
+                    }
+                    if (!f.deleteRecursively()) {
+                        resp.writer.println("删除失败")
+                        return
+                    }
+                }
+                "halt" -> {
+                    exitProcess(0)
+                }
+            }
+        } catch (e: Exception) {
+            resp.writer.use {
+                it.write("错误:${e.localizedMessage}\t${e.stackTrace?.contentToString()}")
+                it.flush()
+            }
+            return
+        }
+
+        resp.writer.println("please post/get command")
+    }
+
     private fun startTomcat(tcpPort: Int? = null, war: String? = null): Server? {
         Runtime.getRuntime().addShutdownHook(Thread { stopTomcat() })
         //设定
-        val catBase = globalSetting["catBase"]?.toString() ?: "tomcat"
+        val catBase = FileIO.bornDir(globalSetting["catBase"]?.toString() ?: "tomcat")
         val hostName = globalSetting["hostName"]?.toString() ?: "host-${this.javaClass.simpleName}"
         val port = tcpPort ?: globalSetting["port"]?.toString()?.toInt() ?: 7573
 
         val tomcat = Tomcat()
-        tomcat.setBaseDir(FileIO.bornDir(catBase).absolutePath) // 设置工作目录
+        tomcat.setBaseDir(catBase.absolutePath) // 设置工作目录
         tomcat.setHostname(hostName) // 主机名, 将生成目录: {工作目录}/work/Tomcat/{主机名}/ROOT
         //FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}work${File.separator}Tomcat${File.separator}${hostName}${File.separator}ROOT")
 
@@ -80,57 +139,10 @@ object NakedBoot {
 
         // contextPath要使用的上下文映射，""表示根上下文
         // srvtest上下文的基础目录，用于静态文件。相对于服务器主目录必须存在 ({主目录}/webapps/{srvtest})
-        // contextPath要使用的上下文映射，""表示根上下文
-        // srvtest上下文的基础目录，用于静态文件。相对于服务器主目录必须存在 ({主目录}/webapps/{srvtest})
         FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}webapps${File.separator}srvtest")
         val ctx = tomcat.addContext("/globalServlet",  /*{webapps}/~*/"srvtest")
 
-        Tomcat.addServlet(ctx, "cmd", object : HttpServlet() {
-            private val serialVersionUID = 3L
-            override fun service(request: HttpServletRequest, response: HttpServletResponse) {
-                //接受到表单的数据， 先使用request设置服务器应该使用的字符编码,否则字符不统一会出现乱码
-                request.characterEncoding = "UTF-8"
-                response.characterEncoding = "UTF-8"
-                response.contentType = "text/html"
-                response.setHeader("Server", "Embedded Tomcat")
-                try {
-                    when (request.getParameter("cmd")) {
-                        "stop" -> {
-                            stopTomcat()
-                            response.writer.println("服务器已经停止")
-                            return
-                        }
-                        "start" -> start()
-                        "restart" -> {
-                            tomcatThread = Thread {
-                                restartTomcat()
-                            }.apply { start() }
-                            response.writer.println("完成:$tomcatThread")
-                            return
-                        }
-                        "flush" -> {
-                            val f = File(uploadDir)
-                            if (uploadDir.isNullOrEmpty() || !f.exists()) {
-                                response.writer.println("没有上传文件")
-                                return
-                            }
-                            if (!f.deleteRecursively()) {
-                                response.writer.println("删除失败")
-                                return
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    response.writer.use {
-                        it.write("错误:$e")
-                        it.flush()
-                    }
-                    return
-                }
-
-                response.sendRedirect("/globalServlet/hello")
-            }
-        })
+        Tomcat.addServlet(ctx, "cmd", this)
         ctx.addServletMappingDecoded("/", "cmd")
         //集中设定
         tomcat.apply {
@@ -225,7 +237,11 @@ object NakedBoot {
                 urlList.add("/")
             }
         } else {
-            FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}root")
+            val rootDir = FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}root")
+            val indexJsp = File(rootDir, "index.jsp")
+            if (!indexJsp.exists()) {
+                FileIO.getRootIndexJsp(indexJsp.toPath())
+            }
             tomcat.addWebapp("", "${tomcat.server.catalinaBase.absolutePath}${File.separator}root").apply {
                 urlList.add("/")
             }
@@ -260,7 +276,7 @@ object NakedBoot {
         return tomcat?.server
     }
 
-    fun loadAllSetting(): MutableMap<String?, Map<Any, Any>> {
+    private fun loadAllSetting(): MutableMap<String?, Map<Any, Any>> {
         try {
             globalSetting.apply {
                 putAll(loadSetting(globalSettingFile))

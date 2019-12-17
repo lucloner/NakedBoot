@@ -16,11 +16,7 @@ class UploadServlet(upload: String) : NakedBootHttpServlet() {
     private val maxMemSize = 1_000_000_000
     private val uploadDir: String
 
-    constructor() : this(
-        NakedBoot.globalSetting["uploadDir"]?.toString()
-            ?: NakedBoot.loadAllSetting()[NakedBoot.globalSettingFile]?.get("uploadDir").toString()
-    )
-
+    constructor() : this(NakedBoot.uploadDir)
 
     init {
         var dir = upload

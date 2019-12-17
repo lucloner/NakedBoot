@@ -15,8 +15,7 @@ class JarServlet(upload: String, private val enabledList: MutableSet<String>) : 
     private val jarDir: String
 
     constructor() : this(
-        NakedBoot.globalSetting["uploadDir"]?.toString()
-            ?: NakedBoot.loadAllSetting()[NakedBoot.globalSettingFile]?.get("uploadDir").toString(),
+        NakedBoot.uploadDir,
         NakedBoot.enabledWars
     )
 

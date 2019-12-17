@@ -10,11 +10,7 @@ class WarsServlet(upload: String, private val enabledList: MutableSet<String>) :
     private val serialVersionUID = 4L
     private val warDir: String
 
-    constructor() : this(
-        NakedBoot.globalSetting["uploadDir"]?.toString()
-            ?: NakedBoot.loadAllSetting()[NakedBoot.globalSettingFile]?.get("uploadDir").toString(),
-        NakedBoot.enabledWars
-    )
+    constructor() : this(NakedBoot.uploadDir, NakedBoot.enabledWars)
 
     init {
         var dir = upload

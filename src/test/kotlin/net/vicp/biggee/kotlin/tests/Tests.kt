@@ -55,4 +55,9 @@ class Tests {
             println(it.realName)
         }
     }
+
+    @Test
+    fun testRes() {
+        println(this.javaClass.getResource("/index.jsp").toString())
+    }
 }
