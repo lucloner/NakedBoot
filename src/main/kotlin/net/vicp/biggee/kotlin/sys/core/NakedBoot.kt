@@ -1,6 +1,7 @@
 package net.vicp.biggee.kotlin.sys.core
 
 import net.vicp.biggee.java.util.ClassUtils
+import net.vicp.biggee.kotlin.net.servlet.JarServlet
 import net.vicp.biggee.kotlin.net.servlet.NakedBootHttpServlet
 import net.vicp.biggee.kotlin.net.servlet.UploadServlet
 import net.vicp.biggee.kotlin.net.servlet.WarsServlet
@@ -106,6 +107,7 @@ object NakedBoot : NakedBootHttpServlet() {
         }
 
         resp.writer.println("please post/get command")
+        super.service(req, resp)
     }
 
     private fun startTomcat(tcpPort: Int? = null, war: String? = null): Server? {
@@ -196,6 +198,9 @@ object NakedBoot : NakedBootHttpServlet() {
         //war manager
         Tomcat.addServlet(ctx, "warManager", WarsServlet(uploadDir, enabledWars))
         ctx.addServletMappingDecoded("/warManager", "warManager")
+        //jar manager
+        Tomcat.addServlet(ctx, "JarExec", JarServlet(uploadDir, enabledWars))
+        ctx.addServletMappingDecoded("/JarExec", "JarExec")
         //catalogue
         Tomcat.addServlet(ctx, "hello", object : HttpServlet() {
             private val serialVersionUID = 1L
@@ -205,9 +210,6 @@ object NakedBoot : NakedBootHttpServlet() {
                 response.setHeader("Server", "Embedded Tomcat")
                 response.writer.use { writer ->
                     writer.write("Hello, Embedded Tomcat!")
-                    urlList.iterator().forEach {
-                        writer.write("<BR /><a href=${it}>Context: [${it}]</a><BR />")
-                    }
                     writer.flush()
                 }
             }

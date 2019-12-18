@@ -38,7 +38,7 @@ class JarServlet(upload: String, private val enabledList: MutableSet<String>) : 
         resp.setHeader("Server", "Embedded Tomcat")
         var availablePort = 17573
 
-        logger.debug("inter Service:$req")
+        logger.debug("inter Service:JarServlet")
         try {
             val jar = req.getParameter("jar").apply {
                 if (isNullOrBlank()) {
@@ -53,20 +53,18 @@ class JarServlet(upload: String, private val enabledList: MutableSet<String>) : 
 
             val war = req.getParameter("war") ?: ""
 
-            logger.debug("receive get/post:$req")
+            logger.debug("receive get/post:${req.parameterMap.toMap()}")
             val jarFile = File(jarDir, "$jar.jar")
             if (!jarFile.exists()) {
                 throw FileNotFoundException("no ${jarFile.absolutePath}")
             }
             if (!war.isNotBlank()) {
-
+//TODO:此处还缺
             }
             pool.execute {
+                logger.info("get to run:$jar\t$port\t$war")
                 taskList.put(port.toInt(), RunningProcess(RunJar(jarFile.absolutePath, port, war)))
-                val p = taskList.get(port.toInt())?.process ?: return@execute
-                logger.debug(p.readOutPut())
                 logger.debug("--BOJ(ars)--")
-                logger.debug(p.readErrorOutPut())
             }
             resp.writer.println("done cmd: $jar, target port: $port\n")
         } catch (_: Exception) {
@@ -92,11 +90,21 @@ class JarServlet(upload: String, private val enabledList: MutableSet<String>) : 
             )
         } ?: return super.service(req, resp)
         resp.writer.println("--EOJ(ars)--")
+
+        return super.service(req, resp)
     }
 
     private class RunningProcess(val process: RunJava) {
         val thread by lazy { Thread.currentThread() }
         val timestamp = System.currentTimeMillis()
+        val port by lazy {
+            taskList.iterator().forEach {
+                if (it.value == this) {
+                    return@lazy it.key
+                }
+            }
+            return@lazy 0
+        }
     }
 
     companion object {
