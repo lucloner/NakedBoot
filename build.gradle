@@ -19,7 +19,7 @@ plugins {
 }
 
 group 'net.vicp.biggee.java.sys'
-version '0.1-SNAPSHOT'
+version '0.2-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
@@ -41,13 +41,16 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4+'
     testImplementation "junit:junit:4+"
 
-    compileOnly "javax.annotation:javax.annotation-api:1+"
     // https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core
-    compile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-core', version: '9.0+'
+    compile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-core', version: '9+'
     // log
     compile "org.slf4j:slf4j-log4j12:$slf4j_version"
-    implementation 'org.apache.tomcat:jasper:6+'
-    implementation 'com.google.code.gson:gson:2+'
+    // https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-jasper
+    compile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-jasper', version: '9+'
+    // https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-reflect
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: kotlinVersion
+    // https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-android-extensions-runtime
+    runtime group: 'org.jetbrains.kotlin', name: 'kotlin-android-extensions-runtime', version: kotlinVersion
 }
 
 compileKotlin {
@@ -81,6 +84,9 @@ war {
     classpath fileTree('warlib') // adds a file-set to the WEB-INF/lib dir.
     //classpath configurations.moreLibs // adds a configuration to the WEB-INF/lib dir.
     webXml = file('tomcat/web.xml') // copies a file to WEB-INF/web.xml
+    manifest {
+        attributes 'Extension-Name': 'NBBP_ALL_20191218'
+    }
 }
 
 task clearBluePrint(type:Delete){
@@ -92,14 +98,19 @@ tasks.clean.dependsOn 'clearBluePrint'
 
 startScripts.enabled = false
 mainClassName = "net.vicp.biggee.java.sys.BluePrint"
-jar {
+
+shadowJar {
     manifest {
-        attributes 'Main-Class': mainClassName
+        attributes 'Extension-Name': 'NBBP_ALL_20191218'
     }
-    archiveFileName = "${project.name}_${project.version}.jar"
 }
 
-// Output to build/libs/shadow.jar
-shadowJar {}
+manifest {
+    attributes 'Main-Class': mainClassName
+}
+
+compileJava{
+    options.verbose true
+}
 
 

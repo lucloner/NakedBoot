@@ -60,4 +60,26 @@ class Tests {
     fun testRes() {
         println(this.javaClass.getResource("/index.jsp").toString())
     }
+
+    @Test
+    fun testJarFile() {
+        val j = JarFile("build/libs/NakedBoot-0.1-SNAPSHOT-all.jar")
+        println(j.manifest.mainAttributes.entries)
+        j.manifest.entries.iterator().forEach {
+            val s = "Extension-Name"
+            print(it.key)
+            print(String(it.key.toString().toByteArray()).equals("Extension-Name"))
+            print(String(BluePrint.Ext_Key.toByteArray()).equals(it.key))
+            print(BluePrint.Ext_Key == it.key)
+            print(s == it.key)
+            println(it.value)
+        }
+
+    }
+
+    @Test
+    fun testCore() {
+        val j = JarFile("build/libs/NakedBoot-0.2-SNAPSHOT-all.jar")
+        println(FileIO.isCoreJar(j, "notJar"))
+    }
 }

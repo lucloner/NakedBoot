@@ -37,6 +37,11 @@ object NakedBoot : NakedBootHttpServlet() {
     var uploadDir = ""
     @JvmStatic
     val enabledWars = HashSet<String>()
+    val fingerPrint by lazy { hashCode() }
+    @JvmStatic
+    var isChild = false
+    @JvmStatic
+    val urlList = HashSet<String>()
 
     init {
         loadAllSetting()
@@ -73,6 +78,9 @@ object NakedBoot : NakedBootHttpServlet() {
                 "stop" -> {
                     stopTomcat()
                     resp.writer.println("服务器已经停止")
+                    if (isChild) {
+                        exitProcess(0)
+                    }
                     return
                 }
                 "start" -> start()
@@ -97,6 +105,7 @@ object NakedBoot : NakedBootHttpServlet() {
                 "halt" -> {
                     exitProcess(0)
                 }
+                else -> logger.info("echo:[${req.getParameter("cmd")}]")
             }
         } catch (e: Exception) {
             resp.writer.use {
@@ -107,7 +116,6 @@ object NakedBoot : NakedBootHttpServlet() {
         }
 
         resp.writer.println("please post/get command")
-        super.service(req, resp)
     }
 
     private fun startTomcat(tcpPort: Int? = null, war: String? = null): Server? {
@@ -130,8 +138,6 @@ object NakedBoot : NakedBootHttpServlet() {
 
         logger.info("connector ok: $conn")
 
-        val urlList = HashSet<String>()
-
         FileIO.bornDir("${tomcat.server.catalinaBase.absolutePath}${File.separator}war")
             .listFiles { _, fn -> fn.endsWith(".war") }?.iterator()?.forEach {
                 tomcat.addWebapp("/war/${it.nameWithoutExtension}", it.absolutePath).apply {
@@ -146,6 +152,8 @@ object NakedBoot : NakedBootHttpServlet() {
 
         Tomcat.addServlet(ctx, "cmd", this)
         ctx.addServletMappingDecoded("/", "cmd")
+        urlList.add("globalServlet/")
+
         //集中设定
         tomcat.apply {
             host.apply {
@@ -198,9 +206,11 @@ object NakedBoot : NakedBootHttpServlet() {
         //war manager
         Tomcat.addServlet(ctx, "warManager", WarsServlet(uploadDir, enabledWars))
         ctx.addServletMappingDecoded("/warManager", "warManager")
+        urlList.add("globalServlet/warManager")
         //jar manager
         Tomcat.addServlet(ctx, "JarExec", JarServlet(uploadDir, enabledWars))
         ctx.addServletMappingDecoded("/JarExec", "JarExec")
+        urlList.add("globalServlet/JarExec")
         //catalogue
         Tomcat.addServlet(ctx, "hello", object : HttpServlet() {
             private val serialVersionUID = 1L
@@ -210,11 +220,15 @@ object NakedBoot : NakedBootHttpServlet() {
                 response.setHeader("Server", "Embedded Tomcat")
                 response.writer.use { writer ->
                     writer.write("Hello, Embedded Tomcat!")
+                    urlList.iterator().forEach {
+                        writer.write("<p><a href='$it'>linke to: [$it]</a></p>")
+                    }
                     writer.flush()
                 }
             }
         })
         ctx.addServletMappingDecoded("/hello", "hello")
+        urlList.add("globalServlet/hello")
 
         tomcat.start()
         logger.info("tomcat started")
@@ -321,11 +335,17 @@ object NakedBoot : NakedBootHttpServlet() {
         return result
     }
 
-    fun saveSetting(fileAndPath: String) = FileIO.saveProfile(
-        fileAndPath, HashMap<Any, Any>().apply {
-            putAll(settings[fileAndPath] ?: HashMap())
-            logger.info("profile($fileAndPath) stored: $this")
-        })
+    fun saveSetting(fileAndPath: String) {
+        if (isChild) {
+            logger.error("children is no rights")
+            return
+        }
+        FileIO.saveProfile(
+            fileAndPath, HashMap<Any, Any>().apply {
+                putAll(settings[fileAndPath] ?: HashMap())
+                logger.info("profile($fileAndPath) stored: $this")
+            })
+    }
 
     fun saveSetting(any: Any) = saveSetting(any.javaClass.name)
     fun loadSetting(any: Any) = loadSetting(any.javaClass.name)

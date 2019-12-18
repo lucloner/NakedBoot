@@ -27,12 +27,16 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
     public static BluePrint INSTANCE = null;
     public static Logger logger = Logger.getLogger(BluePrint.class);
     public static boolean isWar = false;
+    public static final String Ext_Name = "Extension-Name";
+    public static final String Ext_Key = FileIO.INSTANCE.getManifest(Ext_Name);
 
     public BluePrint() {
         INSTANCE = this;
     }
 
     public static void main(String[] args) {
+        logger.info("version ext code is: " + Ext_Key);
+
         if (System.getProperty("os.name").toLowerCase().contains("linux")) {
             InitGlobalFont(new Font("Ubuntu", Font.PLAIN, 12));  //统一设置字体
         }
@@ -40,6 +44,7 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
         Integer port = null;
         String war = null;
         try {
+            logger.debug("args:" + args.length);
             switch (args.length) {
                 case 2:
                     war = args[1];
@@ -50,12 +55,14 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
                     break;
                 default:
                     logger.debug("normal boot");
+                    break;
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
 
         if (port != null) {
+            NakedBoot.setChild(true);
             NakedBoot.INSTANCE.start(port, war);
             return;
         }
@@ -148,7 +155,9 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
         logger.info("++++++++++++++++Server Init+++++++++++++++++++");
         logger.info("path:" + NakedBoot.getUploadDir());
 
-        sce.getServletContext().addServlet("cmd", NakedBoot.INSTANCE).addMapping("/globalServlet/cmd");
+        logger.info("version ext code is: " + Ext_Key);
+        sce.getServletContext().addServlet("cmd", NakedBoot.INSTANCE).addMapping("/globalServlet/");
+        logger.info("++++++++++++++++EOS(erver Init)+++++++++++++++++++");
     }
 
     /**

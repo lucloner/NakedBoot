@@ -62,7 +62,7 @@ class UploadServlet(upload: String) : NakedBootHttpServlet() {
                 if (fItem.fieldName.contains("upload")) {
                     val name = fItem.name.split(File.separator).last()
                     try {
-                        val f = FileIO.bornFile("${uploadDir}${File.separator}$name")
+                        val f = FileIO.bornFile("${FileIO.bornDir(uploadDir)}${File.separator}$name")
                         logger.trace("写入文件:${f.absolutePath}")
                         fItem.write(f)
                         logger.trace("完成写入文件:${f.exists()}")

@@ -1,6 +1,5 @@
 package net.vicp.biggee.kotlin.net.servlet
 
-import com.google.gson.Gson
 import org.slf4j.LoggerFactory
 import javax.servlet.ServletContext
 import javax.servlet.ServletRequest
@@ -107,7 +106,7 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
         super.doPost(req, resp)
-        logger.debug("$serialVersionUID\tdoPost\t${Gson().toJson(req.parameterMap)}\t$resp")
+        logger.debug("$serialVersionUID\tdoPost\t${req.parameterMap.toMap()}\t$resp")
     }
 
     /**
@@ -146,7 +145,7 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun doHead(req: HttpServletRequest, resp: HttpServletResponse) {
         super.doHead(req, resp)
-        logger.debug("$serialVersionUID\tdoHead\t${Gson().toJson(req.parameterMap)}\t$resp")
+        logger.debug("$serialVersionUID\tdoHead\t${req.parameterMap.toMap()}\t$resp")
     }
 
     /**
@@ -187,7 +186,7 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun doDelete(req: HttpServletRequest, resp: HttpServletResponse) {
         super.doDelete(req, resp)
-        logger.debug("$serialVersionUID\tdoDelete\t${Gson().toJson(req.parameterMap)}\t$resp")
+        logger.debug("$serialVersionUID\tdoDelete\t${req.parameterMap.toMap()}\t$resp")
     }
 
     /**
@@ -225,7 +224,7 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun doOptions(req: HttpServletRequest, resp: HttpServletResponse) {
         super.doOptions(req, resp)
-        logger.debug("$serialVersionUID\tdoOptions\t${Gson().toJson(req.parameterMap)}\t$resp")
+        logger.debug("$serialVersionUID\tdoOptions\t${req.parameterMap.toMap()}\t$resp")
     }
 
     /**
@@ -253,7 +252,7 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun doTrace(req: HttpServletRequest, resp: HttpServletResponse) {
         super.doTrace(req, resp)
-        logger.debug("$serialVersionUID\tdoTrace\t${Gson().toJson(req.parameterMap)}\t$resp")
+        logger.debug("$serialVersionUID\tdoTrace\t${req.parameterMap.toMap()}\t$resp")
     }
 
     /**
@@ -330,7 +329,7 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) {
         super.doGet(req, resp)
-        logger.debug("$serialVersionUID\tdoGet\t${Gson().toJson(req.parameterMap)}\t$resp")
+        logger.debug("$serialVersionUID\tdoGet\t${req.parameterMap.toMap()}\t$resp")
     }
 
     /**
@@ -407,7 +406,7 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun doPut(req: HttpServletRequest, resp: HttpServletResponse) {
         super.doPut(req, resp)
-        logger.debug("$serialVersionUID\tdoPut\t${Gson().toJson(req.parameterMap)}\t$resp")
+        logger.debug("$serialVersionUID\tdoPut\t${req.parameterMap.toMap()}\t$resp")
     }
 
     /**
@@ -437,7 +436,7 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun service(req: HttpServletRequest, resp: HttpServletResponse) {
         super.service(req, resp)
-        logger.debug("$serialVersionUID\tservice\t${Gson().toJson(req.parameterMap)}\t$resp")
+        logger.debug("$serialVersionUID\tservice\t${req.parameterMap.toMap()}\t$resp")
     }
 
     /**
@@ -464,6 +463,6 @@ open class NakedBootHttpServlet : HttpServlet() {
      */
     override fun service(req: ServletRequest, res: ServletResponse) {
         super.service(req, res)
-        logger.debug("$serialVersionUID\tservice\t${Gson().toJson(req.parameterMap)}\t$res")
+        logger.debug("$serialVersionUID\tservice\t${req.parameterMap.toMap()}\t$res")
     }
 }

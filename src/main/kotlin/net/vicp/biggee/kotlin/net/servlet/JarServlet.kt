@@ -4,6 +4,7 @@ import net.vicp.biggee.kotlin.proc.RunJar
 import net.vicp.biggee.kotlin.proc.RunJava
 import net.vicp.biggee.kotlin.sys.core.NakedBoot
 import net.vicp.biggee.kotlin.util.FileIO
+import org.apache.juli.logging.LogFactory
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.concurrent.Executors
@@ -44,14 +45,14 @@ class JarServlet(upload: String, private val enabledList: MutableSet<String>) : 
                 if (isNullOrBlank()) {
                     throw NullPointerException("no jar")
                 }
-            }
+            }.toString()
             val port = req.getParameter("port").apply {
                 if (isNullOrBlank()) {
                     throw NullPointerException("no port")
                 }
-            }
+            }.toInt()
 
-            val war = req.getParameter("war") ?: ""
+            var war = req.getParameter("war")?.toString() ?: ""
 
             logger.debug("receive get/post:${req.parameterMap.toMap()}")
             val jarFile = File(jarDir, "$jar.jar")
@@ -59,11 +60,16 @@ class JarServlet(upload: String, private val enabledList: MutableSet<String>) : 
                 throw FileNotFoundException("no ${jarFile.absolutePath}")
             }
             if (!war.isNotBlank()) {
-//TODO:此处还缺
+                val f = File(jarDir, File(war).name)
+                if (f.isFile) {
+                    war = f.absolutePath
+                } else {
+                    war = ""
+                }
             }
             pool.execute {
                 logger.info("get to run:$jar\t$port\t$war")
-                taskList.put(port.toInt(), RunningProcess(RunJar(jarFile.absolutePath, port, war)))
+                taskList.put(port.toInt(), RunningProcess(RunJar("${jarFile.absolutePath} $port $war")))
                 logger.debug("--BOJ(ars)--")
             }
             resp.writer.println("done cmd: $jar, target port: $port\n")
@@ -88,13 +94,13 @@ class JarServlet(upload: String, private val enabledList: MutableSet<String>) : 
 +++
             """.trimIndent()
             )
-        } ?: return super.service(req, resp)
+        } ?: return
         resp.writer.println("--EOJ(ars)--")
 
-        return super.service(req, resp)
+        return
     }
 
-    private class RunningProcess(val process: RunJava) {
+    private data class RunningProcess(val process: RunJava) {
         val thread by lazy { Thread.currentThread() }
         val timestamp = System.currentTimeMillis()
         val port by lazy {
@@ -104,6 +110,19 @@ class JarServlet(upload: String, private val enabledList: MutableSet<String>) : 
                 }
             }
             return@lazy 0
+        }
+        val logger by lazy { LogFactory.getLog(this::class.java) }
+
+        init {
+            var msg: String? = "STUB"
+            while (!msg.isNullOrBlank()) {
+                msg = process.readOutPut()
+                logger.info(msg)
+                msg = process.readErrorOutPut()
+                logger.error(msg)
+            }
+
+            logger.debug(process.waitFor())
         }
     }
 

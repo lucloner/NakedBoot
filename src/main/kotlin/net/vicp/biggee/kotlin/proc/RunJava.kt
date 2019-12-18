@@ -11,7 +11,11 @@ open class RunJava(val process: Process) {
     fun waitFor() = process.waitFor()
 
     fun readOutPut() =
-        stringBuffer.append(String(process.inputStream.readAllBytes(), Charset.defaultCharset())).toString()
+        try {
+            stringBuffer.append(String(process.inputStream.readAllBytes(), Charset.defaultCharset())).toString()
+        } catch (e: Exception) {
+            stringBuffer.toString()
+        }
 
     fun readErrorOutPut() = String(process.inputStream.readAllBytes(), Charset.defaultCharset())
     fun writeString(input: String) = process.outputStream.write(input.toByteArray(Charset.defaultCharset()))

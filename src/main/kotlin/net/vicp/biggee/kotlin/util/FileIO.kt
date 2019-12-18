@@ -8,11 +8,15 @@ import java.net.URL
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.jar.JarFile
 import java.util.zip.*
 
 object FileIO {
     @JvmStatic
     var logger = LogFactory.getLog(FileIO::class.java)
+    @JvmStatic
+    var jarFile: JarFile? = null
+
     /** 缓冲器大小  */
     private const val BUFFER = 512
     //创建临时目录
@@ -332,4 +336,25 @@ object FileIO {
     )
 
     fun getRootIndexJsp(dst: Path): Path = resourceLeadOut("/index.jsp", dst)
+
+    fun getManifest(key: String): String {
+        val url = javaClass.getResource("/log4j.properties")
+        if (url.protocol == "jar") {
+            val j = (url.openConnection() as JarURLConnection).jarFile
+            jarFile = j
+            println(jarFile?.name ?: "isNull")
+            return getManifest(j, key)
+        }
+        return "notJar"
+    }
+
+    fun getManifest(jarFile: JarFile, key: String) = jarFile.manifest.mainAttributes.entries.iterator().forEach {
+        if (String(it.key.toString().toByteArray()) == key) {
+            return it.value.toString()
+        }
+    }.toString()
+
+    fun getMajorName(file: String) = File(file).nameWithoutExtension
+
+    fun isCoreJar(jarFile: JarFile, key: String) = getManifest(jarFile, BluePrint.Ext_Name) == key || key == "notJar"
 }
