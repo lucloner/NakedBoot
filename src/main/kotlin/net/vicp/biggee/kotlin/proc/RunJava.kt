@@ -16,7 +16,7 @@ open class RunJava(val process: Process) {
         } catch (e: Exception) {
             stringBuffer.toString()
         }
-
+    /*@since 9*/
     fun readErrorOutPut() = String(process.inputStream.readAllBytes(), Charset.defaultCharset())
     fun writeString(input: String) = process.outputStream.write(input.toByteArray(Charset.defaultCharset()))
 

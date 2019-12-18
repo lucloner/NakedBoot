@@ -113,6 +113,7 @@ This jar in Java!<br/>
     　　　<label for="port">port: </label><input type="text" id="port" name="port"/><br/>
     <label for="war">war包: </label>
     <select id="war" name="war">
+        <option value="">无参数启动默认环境</option>
         <%
             for (final File f : NakedBoot.INSTANCE.uploadFilesWar()) {
                 if (f.isFile() && f.getName().endsWith(".war")) {

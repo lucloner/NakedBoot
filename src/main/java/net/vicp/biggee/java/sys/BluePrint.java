@@ -149,7 +149,7 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
 
         Logger log = Logger.getLogger(BluePrint.class);//获取log对象
         FileAppender fileAppender = (FileAppender) Logger.getRootLogger().getAppender("File");//获取FileAppender对象
-        fileAppender.setFile(NakedBoot.getUploadDir() + File.separator + "ssm.log");//重新设置输出日志的路径和文件名
+        fileAppender.setFile(NakedBoot.getUploadDir() + File.separator + "tomcat.log");//重新设置输出日志的路径和文件名
         fileAppender.activateOptions();//使设置的FileAppender起作用
         logger = log;
         logger.info("++++++++++++++++Server Init+++++++++++++++++++");
