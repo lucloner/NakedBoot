@@ -79,7 +79,7 @@ open class RunJava(val process: Process) {
         }
 
         val javaVersion by lazy {
-            val p = RunJava("-version")
+            val p = RunJava("-version 2>&1")
             val out = p.waitFor()
             val stdout = p.readOutPut()
             val stderr = p.readErrorOutPut()
