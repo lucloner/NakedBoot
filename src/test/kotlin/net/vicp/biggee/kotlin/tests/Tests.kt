@@ -1,6 +1,7 @@
 package net.vicp.biggee.kotlin.tests
 
 import net.vicp.biggee.java.sys.BluePrint
+import net.vicp.biggee.kotlin.proc.RunCmd
 import net.vicp.biggee.kotlin.proc.RunJar
 import net.vicp.biggee.kotlin.proc.RunJava
 import net.vicp.biggee.kotlin.sys.core.NakedBoot
@@ -74,12 +75,27 @@ class Tests {
             print(s == it.key)
             println(it.value)
         }
-
     }
 
     @Test
     fun testCore() {
         val j = JarFile("build/libs/NakedBoot-0.2-SNAPSHOT-all.jar")
         println(FileIO.isCoreJar(j, "notJar"))
+    }
+
+    @Test
+    fun testJava() {
+        var j = RunJava("-version")
+        println(j.waitFor())
+        println(j.readOutPut())
+        println(j.readErrorOutPut())
+        j = RunCmd("where.exe java")
+        println(j.waitFor())
+        println(j.readOutPut())
+        println(j.readErrorOutPut())
+        j = RunCmd("java -jar build/libs/NakedBoot-0.2-SNAPSHOT-all.jar")
+        println(j.waitFor())
+        println(j.readOutPut())
+        println(j.readErrorOutPut())
     }
 }

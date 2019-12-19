@@ -1,4 +1,5 @@
 <%@ page import="net.vicp.biggee.java.sys.BluePrint" %>
+<%@ page import="net.vicp.biggee.kotlin.proc.RunJava" %>
 <%@ page import="net.vicp.biggee.kotlin.sys.core.NakedBoot" %>
 <%@ page import="net.vicp.biggee.kotlin.util.FileIO" %>
 <%@ page import="java.io.File" %>
@@ -27,6 +28,8 @@
 <p>内嵌tomcat运行:<%=NakedBoot.INSTANCE.getTomcat() != null%>
 </p>
 <p>主体为war:<%=BluePrint.isWar%>
+</p>
+<p>java版本:<%=RunJava.Companion.getJavaVersion()%>
 </p>
 <hr/>
 <label for="logger">log: </label><input type="text" id="logger" width="100%"/><br/>

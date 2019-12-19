@@ -93,7 +93,7 @@ public class BluePrint extends TreeMap<String, Object> implements ServletContext
 
             @Override
             public void windowClosing(WindowEvent windowEvent) {
-                buttonEnd.doClick();
+                NakedBoot.INSTANCE.stopTomcat(null);
             }
 
             @Override

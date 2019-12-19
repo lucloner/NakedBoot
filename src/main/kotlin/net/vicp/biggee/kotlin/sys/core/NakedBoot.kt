@@ -20,7 +20,7 @@ import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.system.exitProcess
 
-object NakedBoot : NakedBootHttpServlet() {
+object NakedBoot : NakedBootHttpServlet(), Thread.UncaughtExceptionHandler {
     private val serialVersionUID = 3L
     var tomcat: Tomcat? = null
     lateinit var tomcatThread: Thread
@@ -42,11 +42,14 @@ object NakedBoot : NakedBootHttpServlet() {
     var isChild = false
     @JvmStatic
     val urlList = HashSet<String>()
+    @JvmStatic
+    var errmsg = ""
 
     init {
         loadAllSetting()
         uploadDir = globalSetting["uploadDir"]?.toString() ?: uploadDir
         logger = LoggerFactory.getLogger(NakedBoot::class.java)
+        Thread.setDefaultUncaughtExceptionHandler(this)
     }
 
     fun uploadFiles() = File(uploadDir).listFiles() ?: emptyArray<File>()
@@ -116,6 +119,7 @@ object NakedBoot : NakedBootHttpServlet() {
         }
 
         resp.writer.println("please post/get command")
+        resp.writer.println("<hr/>$errmsg")
     }
 
     private fun startTomcat(tcpPort: Int? = null, war: String? = null): Server? {
@@ -223,6 +227,7 @@ object NakedBoot : NakedBootHttpServlet() {
                     urlList.iterator().forEach {
                         writer.write("<p><a href='$it'>linke to: [$it]</a></p>")
                     }
+                    writer.write("<hr/>$errmsg")
                     writer.flush()
                 }
             }
@@ -349,4 +354,17 @@ object NakedBoot : NakedBootHttpServlet() {
 
     fun saveSetting(any: Any) = saveSetting(any.javaClass.name)
     fun loadSetting(any: Any) = loadSetting(any.javaClass.name)
+    /**
+     * Method invoked when the given thread terminates due to the
+     * given uncaught exception.
+     *
+     * Any exception thrown by this method will be ignored by the
+     * Java Virtual Machine.
+     * @param t the thread
+     * @param e the exception
+     */
+    override fun uncaughtException(t: Thread?, e: Throwable?) {
+        errmsg = "!!!uncaughtException!!!$t\t${e?.localizedMessage}\t${e?.stackTrace?.contentToString()}"
+        logger.error(errmsg)
+    }
 }
