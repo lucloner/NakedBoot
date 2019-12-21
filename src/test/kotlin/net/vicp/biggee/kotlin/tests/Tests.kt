@@ -6,9 +6,14 @@ import net.vicp.biggee.kotlin.proc.RunJar
 import net.vicp.biggee.kotlin.proc.RunJava
 import net.vicp.biggee.kotlin.sys.core.NakedBoot
 import net.vicp.biggee.kotlin.util.FileIO
+import org.apache.log4j.LogManager
 import org.junit.Test
+import org.slf4j.LoggerFactory
+import org.slf4j.log4j12.Log4jLoggerAdapter
+import org.slf4j.log4j12.Log4jLoggerFactory
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 import java.util.jar.JarFile
 import javax.servlet.ServletContextListener
 
@@ -97,5 +102,16 @@ class Tests {
         println(j.waitFor())
         println(j.readOutPut())
         println(j.readErrorOutPut())
+    }
+
+    @Test
+    fun testLog() {
+        val f = LoggerFactory.getILoggerFactory() as Log4jLoggerFactory
+        val l = f.getLogger(this::class.java.name) as Log4jLoggerAdapter
+        l.info(Date().toString())
+        l.atInfo().log(System.currentTimeMillis().toString())
+        LogManager.getRootLogger().allAppenders.iterator().forEach {
+            println(it)
+        }
     }
 }
